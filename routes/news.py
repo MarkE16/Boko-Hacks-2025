@@ -1,6 +1,8 @@
 from flask import Blueprint, render_template, jsonify, request
 import requests
 import json
+import os
+from dotenv import load_dotenv
 
 news_bp = Blueprint('news', __name__, url_prefix='/apps/news')
 
@@ -16,27 +18,28 @@ CATEGORY_MAPPING = {
 
 DEFAULT_COUNTRY = 'us'
 
+load_dotenv()
 INTERNAL_NEWS = [
     {
-        "title": "CONFIDENTIAL: Security Breach Report Q3",
-        "description": "Details of recent security incidents affecting customer data. For internal review only.",
-        "url": "#internal-only",
-        "publishedAt": "2025-01-15T08:30:00Z",
-        "urlToImage": ""
+        "title": os.getenv('INTERNAL_NEWS_TITLE_1'),
+        "description": os.getenv('INTERNAL_NEWS_DESCRIPTION_1'),
+        "url": os.getenv('INTERNAL_NEWS_URL_1'),
+        "publishedAt": os.getenv('INTERNAL_NEWS_PUBLISHED_AT_1'),
+        "urlToImage": os.getenv('INTERNAL_NEWS_IMAGE_1')
     },
     {
-        "title": "CONFIDENTIAL: Upcoming Product Launch",
-        "description": "Specifications for our next-gen product launch in Q2. Contains proprietary information.",
-        "url": "#internal-only",
-        "publishedAt": "2025-02-01T10:15:00Z",
-        "urlToImage": ""
+        "title": os.getenv('INTERNAL_NEWS_TITLE_2'),
+        "description": os.getenv('INTERNAL_NEWS_DESCRIPTION_2'),
+        "url": os.getenv('INTERNAL_NEWS_URL_2'),
+        "publishedAt": os.getenv('INTERNAL_NEWS_PUBLISHED_AT_2'),
+        "urlToImage": os.getenv('INTERNAL_NEWS_IMAGE_2')
     },
     {
-        "title": "CONFIDENTIAL: Internal API Credentials",
-        "description": "API_KEY: 5x6hdPQmSK2aT9E3bL8nZ7yRfV4wX1  ADMIN_KEY: jKq2P8zX5sW7vT1yR4aB9nL6cE3hG",
-        "url": "#internal-only",
-        "publishedAt": "2025-01-30T14:45:00Z",
-        "urlToImage": ""
+        "title": os.getenv('INTERNAL_NEWS_TITLE_3'),
+        "description": os.getenv('INTERNAL_NEWS_DESCRIPTION_3'),
+        "url": os.getenv('INTERNAL_NEWS_URL_3'),
+        "publishedAt": os.getenv('INTERNAL_NEWS_PUBLISHED_AT_3'),
+        "urlToImage": os.getenv('INTERNAL_NEWS_IMAGE_3')
     }
 ]
 
