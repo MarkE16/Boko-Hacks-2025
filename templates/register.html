@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
   <title>Register - BokoHacks</title>
+  <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
 </head>
 <body>
   <header>
@@ -38,11 +39,7 @@
         <label for="password">Password:</label>
         <input type="password" id="password" name="password" placeholder="Create a password" required>
         
-        <label for="captcha">Enter CAPTCHA:</label>
-        <div class="captcha-box">
-          <img src="{{ url_for('captcha.get_captcha') }}" alt="CAPTCHA" class="captcha-image">
-        </div>
-        <input type="text" id="captcha" name="captcha" placeholder="Enter the text shown above" required>
+        <div class="h-captcha" data-sitekey="f68ada8a-007c-462a-ad7a-ed049e083cf4"></div>
         
         <button type="submit">Register</button>
       </form>

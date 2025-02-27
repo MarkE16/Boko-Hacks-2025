@@ -3,5 +3,6 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+.env
 Rules(READ ME FIRST).pdf
 instance/
