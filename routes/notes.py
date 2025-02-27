@@ -45,6 +45,10 @@ def create_note():
     if not title or not content:
         return jsonify({'success': False, 'error': 'Title and content are required'}), 400
 
+    regex = r'<.*?>'
+    title = title.strip().replace(regex, '')
+    content = content.strip().replace(regex, '')
+
     try:
         print(f"Creating note - Title: {title}, Content: {content}")
 
