@@ -5,7 +5,7 @@ from models.file import File
 import os
 from werkzeug.utils import secure_filename
 
-ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'gif'} 
+ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -21,20 +21,20 @@ def files():
     if 'user' not in session:
         print("User not logged in")
         return jsonify({'success': False, 'error': 'Not logged in'}), 401
-        
+
     current_user = User.query.filter_by(username=session['user']).first()
     if not current_user:
         print(f"User {session['user']} not found in database")
         return jsonify({'success': False, 'error': 'User not found'}), 404
 
     print(f"Loading files for user: {current_user.username} (ID: {current_user.id})")
-    
+
     all_files = File.query.filter_by(user_id=current_user.id).order_by(File.uploaded_at.desc()).all()
     print(f"Found {len(all_files)} files")
-    
+
     for file in all_files:
         print(f"  - ID: {file.id}, Filename: {file.filename}, Uploaded: {file.uploaded_at}")
-    
+
     return render_template('files.html', files=all_files, current_user_id=current_user.id)
 
 @files_bp.route('/upload', methods=['POST'])
@@ -44,11 +44,11 @@ def upload_file():
     print(f"Request method: {request.method}")
     print(f"Form data: {request.form}")
     print(f"Files: {request.files}")
-    
+
     if 'user' not in session:
         print("User not logged in")
         return jsonify({'success': False, 'error': 'Not logged in'}), 401
-        
+
     current_user = User.query.filter_by(username=session['user']).first()
     if not current_user:
         print(f"User {session['user']} not found in database")
@@ -56,16 +56,19 @@ def upload_file():
 
     file = request.files.get('file')
     print(f"Received file: {file}")
-    
+
     if not file:
         print("No file part in request")
         return jsonify({'success': False, 'error': 'No file part'}), 400
-    
-    if file:  
+
+    if file:
+        if not allowed_file(file.filename):
+            print(f"File type not allowed: {file.filename}")
+            return jsonify({'success': False, 'error': 'File type not allowed'}), 400
         filename = secure_filename(file.filename)
         file_path = os.path.join(UPLOAD_FOLDER, filename)
         print(f"File path: {file_path}")
-        
+
         try:
             file.save(file_path)
             print(f"File saved successfully at {file_path}")
@@ -97,11 +100,11 @@ def upload_file():
 def delete_file(file_id):
     """Delete a file"""
     print(f"\n=== FILE DELETE ATTEMPT: ID {file_id} ===")
-    
+
     if 'user' not in session:
         print("User not logged in")
         return jsonify({'success': False, 'error': 'Not logged in'}), 401
-        
+
     current_user = User.query.filter_by(username=session['user']).first()
     if not current_user:
         print(f"User {session['user']} not found in database")
@@ -110,23 +113,23 @@ def delete_file(file_id):
     try:
         file = File.query.get_or_404(file_id)
         print(f"Found file {file_id}: {file.filename}")
-        
+
         if file.user_id != current_user.id:
             print(f"Access denied: File {file_id} belongs to user {file.user_id}, not {current_user.id}")
             return jsonify({'success': False, 'error': 'Access denied'}), 403
 
         file_path = file.file_path
-        
+
         db.session.delete(file)
         db.session.commit()
         print(f"File record deleted from database")
-        
+
         if os.path.exists(file_path):
             os.remove(file_path)
             print(f"File deleted from filesystem: {file_path}")
         else:
             print(f"Warning: File not found on filesystem: {file_path}")
-            
+
         return jsonify({'success': True, 'message': 'File deleted successfully'})
     except Exception as e:
         print(f"Error deleting file: {str(e)}")
@@ -140,11 +143,11 @@ from flask import send_from_directory
 def download_file(file_id):
     """Download a file using send_from_directory for maximum compatibility"""
     print(f"\n=== FILE DOWNLOAD ATTEMPT: ID {file_id} ===")
-    
+
     if 'user' not in session:
         print("User not logged in")
         return jsonify({'success': False, 'error': 'Not logged in'}), 401
-    
+
     current_user = User.query.filter_by(username=session['user']).first()
     if not current_user:
         print(f"User {session['user']} not found in database")
@@ -153,15 +156,15 @@ def download_file(file_id):
     try:
         file = File.query.get_or_404(file_id)
         print(f"Found file {file_id}: {file.filename}")
-        
-        
+
+
         # Get the directory and filename
         directory = os.path.dirname(file.file_path)
         filename = os.path.basename(file.file_path)
-        
+
         if os.path.exists(file.file_path):
             print(f"Sending file: {file.file_path}")
-            
+
             return send_from_directory(
                 directory,
                 filename,
