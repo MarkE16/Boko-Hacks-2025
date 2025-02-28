@@ -4,8 +4,31 @@ from extensions import db, mail  # Import db and mail from extensions.py
 import random
 import string
 from flask_mail import Message
+from utils.logger import log_registration
+import requests
+import json
 
 register_bp = Blueprint("register", __name__)
+
+def verify_hcaptcha(h_captcha_response, remote_ip=None):
+    from dotenv import load_dotenv
+    import os
+    
+    load_dotenv()
+    secret = os.getenv("HCAPTCHA_SECRET")
+    data = {
+        'secret': secret,
+        'response': h_captcha_response
+    }
+    
+    if remote_ip:
+        data['remoteip'] = remote_ip
+    
+    response = requests.post('https://api.hcaptcha.com/siteverify', data=data)
+    result = json.loads(response.content)
+    
+    return result['success']
+
 
 def generate_verification_code(length=6):
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
@@ -16,17 +39,17 @@ def register():
         username = request.form.get("username")
         email = request.form.get("email")
         password = request.form.get("password")
-        captcha_response = request.form.get("captcha")
-        stored_captcha = session.get("captcha_text")
+        h_captcha_response = request.form.get('h-captcha-response')
+        client_ip = request.remote_addr
 
-        if not stored_captcha or captcha_response.upper() != stored_captcha:
-            flash("Invalid CAPTCHA. Please try again.", "error")
+        if not verify_hcaptcha(h_captcha_response, client_ip):
+            log_registration(success=False, username=username, reason="Invalid hCaptcha")
+            flash("Invalid hCaptcha. Please try again.", "error")
             return redirect(url_for("register.register"))
-
-        session.pop("captcha_text", None)
 
         existing_user = User.query.filter_by(username=username).first()
         if existing_user:
+            log_registration(success=False, username=username, reason="Username already exists")
             flash("Username already exists. Please choose a different one.", "error")
             return redirect(url_for("register.register"))
 
@@ -69,6 +92,12 @@ def verify():
         session.pop("email", None)
         session.pop("password", None)
 
+        session.pop("verification_code", None)
+        session.pop("username", None)
+        session.pop("email", None)
+        session.pop("password", None)
+
+        log_registration(success=True, username=username)
         flash("Registration successful! You can now log in.", "success")
         return redirect(url_for("login.login"))
 

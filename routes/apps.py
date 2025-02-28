@@ -13,7 +13,8 @@ def load_app(app_name):
         "admin_register": "admin_register.html",
         "admin-dashboard": "admin_hub.html",
         "401k": "401k.html",
-        "news": "news.html",  # Add the news template
+        "news": "news.html",  # Add the news template,
+        "email": "email.html",
     }
 
     if app_name == "admin":
