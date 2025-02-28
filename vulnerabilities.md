@@ -14,11 +14,24 @@
   the file will be rejected.
 - Fixed DOS attack vulnerability by limiting file size uploads to 10MB.
 
+### Captcha
+
+- Added hChaptcha support to regitration page.
+
 ### Admin
 
-- Moved default admin information to .env instead of in the plaintext.
-1. Gitignore was not set to ignore database folder, so it would publish your db to github
+- Allowed the default admin to change their password.
+- Fixed the SQL injection for the admin login page.
+- Added custom captcha to admin login page.
 
-2. Added hCaptcha to registration form
+### 401k
 
-3. Refactored retirement 401k stuff to use the DB and added validation
+- Refactored retirement 401k stuff to use the DB and added validation.
+
+### 2FA
+
+- Added email 2FA to registration page.
+
+### Not a Vulnerability
+
+- Added email feature to dashboard.
