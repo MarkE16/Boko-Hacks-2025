@@ -92,7 +92,7 @@ def log_action(action_type: str, message: str, level: str = 'info',
     log_method = getattr(logger, level.lower(), logger.info)
     log_method(log_message)
 
-def log_login(success: bool, username: str, admin: bool = False) -> None:
+def log_login(success: bool, username: str, admin: bool = False, reason: Optional[str] = None) -> None:
     """
     Log a login attempt.
     
@@ -100,14 +100,19 @@ def log_login(success: bool, username: str, admin: bool = False) -> None:
         success: Whether the login was successful
         username: The username that attempted to login
         admin: Whether this was an admin login
+        reason: Optional reason for login failure
     """
     status = "successful" if success else "failed"
     action_type = "admin_login" if admin else "user_login"
     level = "info" if success else "warning"
     
+    message = f"Login {status} for user {username}"
+    if not success and reason:
+        message += f" - Reason: {reason}"
+    
     log_action(
         action_type=action_type,
-        message=f"Login {status} for user {username}",
+        message=message,
         level=level,
         user=username if success else None,
         admin=admin

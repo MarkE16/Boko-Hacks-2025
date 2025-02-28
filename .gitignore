@@ -7,3 +7,5 @@ venv/
 Rules(READ ME FIRST).pdf
 instance/
 logs/
+test_images/
+test_illusions.py

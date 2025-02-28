@@ -76,6 +76,18 @@ def admin():
         username = request.form.get("username")
         password = request.form.get("password")
         
+        # Check if captcha was verified
+        if not session.get('captcha_verified', False):
+            # If captcha wasn't verified, reject the login
+            log_login(success=False, username=username, admin=True, reason="Captcha not verified")
+            return jsonify({
+                'success': False,
+                'message': "Please complete the captcha verification first."
+            })
+        
+        # Clear the captcha verification flag
+        session.pop('captcha_verified', None)
+        
         user = User.query.filter_by(username=username).first()
         if user and user.check_password(password):
             admin_role = Admin.query.filter_by(user_id=user.id).first()

@@ -15,6 +15,21 @@ function initializeApp() {
                         <label for="password">Password</label>
                         <input type="password" id="password" name="password" required>
                     </div>
+                    <div class="form-group captcha-container">
+                        <label>Captcha Verification</label>
+                        <div class="captcha-image-container">
+                            <img id="captcha-image" src="/captcha/generate" alt="Captcha">
+                            <button type="button" id="refresh-captcha" class="small-btn">Refresh</button>
+                        </div>
+                        <div class="captcha-options">
+                            <label>
+                                <input type="radio" name="captcha_answer" value="A" required> Option A
+                            </label>
+                            <label>
+                                <input type="radio" name="captcha_answer" value="B" required> Option B
+                            </label>
+                        </div>
+                    </div>
                     <button type="submit" class="admin-btn">Login</button>
                 </form>
             </div>
@@ -127,8 +142,9 @@ function initializeApp() {
         }
         
         .small-btn {
-            background-color: #f5f5f5;
-            border: 1px solid #ddd;
+            background-color: #501214;
+            color: white;
+            border: none;
             padding: 5px 10px;
             cursor: pointer;
         }
@@ -216,6 +232,37 @@ function initializeApp() {
         .message.success {
             background-color: #d4edda;
             color: #155724;
+        }
+        
+        .captcha-container {
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .captcha-image-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        #captcha-image {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            margin-right: 10px;
+        }
+        
+        .captcha-options {
+            display: flex;
+            gap: 20px;
+        }
+        
+        #refresh-captcha {
+            height: 30px;
+            white-space: nowrap;
+            background-color: #501214;
+            color: white;
+            border: none;
         }
         
         @media (max-width: 600px) {
@@ -310,8 +357,24 @@ function initializeApp() {
         const form = event.target;
         const formData = new FormData(form);
         const username = formData.get("username");
+        const captchaAnswer = formData.get("captcha_answer");
 
         try {
+            // First verify the captcha
+            const captchaResponse = await fetch('/captcha/verify', {
+                method: 'POST',
+                body: new FormData(form)
+            });
+            const captchaData = await captchaResponse.json();
+            
+            if (!captchaData.success) {
+                showMessage(captchaData.message || 'Invalid captcha. Please try again.');
+                // Refresh the captcha
+                refreshCaptcha();
+                return;
+            }
+            
+            // If captcha is valid, proceed with login
             const response = await fetch('/admin', {
                 method: 'POST',
                 body: formData
@@ -328,9 +391,13 @@ function initializeApp() {
                 showMessage('Login successful', 'success');
             } else {
                 showMessage(data.message || 'Invalid credentials');
+                // Refresh the captcha
+                refreshCaptcha();
             }
         } catch (error) {
             showMessage('An error occurred. Please try again.');
+            // Refresh the captcha
+            refreshCaptcha();
         }
     }
 
@@ -495,6 +562,21 @@ function initializeApp() {
         }
     }
 
+    // Function to refresh the captcha
+    function refreshCaptcha() {
+        const captchaImg = document.getElementById('captcha-image');
+        if (captchaImg) {
+            // Add a timestamp to prevent caching
+            captchaImg.src = '/captcha/generate?' + new Date().getTime();
+            
+            // Clear any selected captcha option
+            const captchaOptions = document.querySelectorAll('input[name="captcha_answer"]');
+            captchaOptions.forEach(option => {
+                option.checked = false;
+            });
+        }
+    }
+
     // Add event listeners for form submission
     document.getElementById('admin-login-form').addEventListener('submit', handleLogin);
     document.getElementById('add-user-btn').addEventListener('click', handleAddUser);
@@ -525,6 +607,12 @@ function initializeApp() {
         document.getElementById('show-add-admin').style.display = 'inline-block';
         document.getElementById('admin-username').value = '';
         document.getElementById('admin-password').value = '';
+    });
+
+    // Add event listener for the refresh captcha button
+    document.getElementById('refresh-captcha').addEventListener('click', function(e) {
+        e.preventDefault();
+        refreshCaptcha();
     });
 
     // Check initial login status
