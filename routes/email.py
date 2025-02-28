@@ -18,7 +18,7 @@ def email():
   all_emails = Email.query.filter_by(recipient=current_user.username).all()
   all_users_not_current = User.query.filter(User.username != current_user.username).all()
 
-  return render_template('email.html', emails=all_emails, recipients=all_users_not_current, current_user_id=current_user.id)
+  return render_template('email.html', emails=all_emails, recipients=all_users_not_current, current_user_id=current_user.id, username=current_user.username)
 
 @email_bp.route('/send', methods=['POST'])
 def send_email():
@@ -33,6 +33,11 @@ def send_email():
   subject = data.get('subject')
   recipient = data.get('recipient')
   body = data.get('body')
+
+  regex = r'<.*?>'
+  subject = subject.strip().replace(regex, '')
+  recipient = recipient.strip().replace(regex, '')
+  body = body.strip().replace(regex, '')
 
 
   new_email = Email(subject=subject, recipient=recipient, sender=current_user.username, body=body)
