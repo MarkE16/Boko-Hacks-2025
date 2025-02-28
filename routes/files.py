@@ -1,9 +1,10 @@
-from flask import Blueprint, render_template, request, jsonify, session, send_file
+from flask import Blueprint, render_template, request, jsonify, session, send_file, current_app
 from extensions import db
 from models.user import User
 from models.file import File
 import os
 from werkzeug.utils import secure_filename
+from werkzeug.exceptions import RequestEntityTooLarge
 
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 UPLOAD_FOLDER = 'uploads'
@@ -157,7 +158,6 @@ def download_file(file_id):
         file = File.query.get_or_404(file_id)
         print(f"Found file {file_id}: {file.filename}")
 
-
         # Get the directory and filename
         directory = os.path.dirname(file.file_path)
         filename = os.path.basename(file.file_path)
@@ -178,3 +178,9 @@ def download_file(file_id):
         import traceback
         traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@files_bp.errorhandler(RequestEntityTooLarge)
+def handle_file_too_large(error):
+    """Handle file too large error"""
+    print("File too large")
+    return jsonify({'success': False, 'error': 'File too large'}), 413

@@ -4,6 +4,7 @@ from models.user import User
 from models.note import Note
 from datetime import datetime
 from sqlalchemy import text
+import re
 
 notes_bp = Blueprint('notes', __name__, url_prefix='/apps/notes')
 
@@ -46,8 +47,8 @@ def create_note():
         return jsonify({'success': False, 'error': 'Title and content are required'}), 400
 
     regex = r'<.*?>'
-    title = title.strip().replace(regex, '')
-    content = content.strip().replace(regex, '')
+    title = re.sub(regex, '', title.strip())
+    content = re.sub(regex, '', content.strip())
 
     try:
         print(f"Creating note - Title: {title}, Content: {content}")

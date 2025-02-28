@@ -12,7 +12,8 @@ class AppModal {
             'admin': { path: '/static/js/admin.js' },
             'chat': { path: '/static/js/chat.js' },
             'api': { path: '/static/js/api.js' },
-            '401k': { path: '/static/js/401k.js' }
+            '401k': { path: '/static/js/401k.js' },
+            'email': { path: '/static/js/email.js' }
         };
         
         this.initializeEventListeners();

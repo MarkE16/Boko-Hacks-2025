@@ -111,3 +111,8 @@ This application contains intentional security vulnerabilities for educational p
 
 ## License
 MIT License - See LICENSE file for details
+
+
+## RUNNING THIS APP
+
+You will need an hCaptcha secret key (HCAPTCHA_SECRET in .env) which we will send to rmo44@txstate.edu to run this app
