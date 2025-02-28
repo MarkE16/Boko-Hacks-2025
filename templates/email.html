@@ -9,6 +9,12 @@
       href="{{ url_for('static', filename='styles.css') }}"
     />
     <style>
+      .messages {
+        max-width: 100%;
+        margin: 20px auto;
+        height: 30vh;
+        overflow-y: auto;
+      }
       .message {
         background-color: #f5f5f5;
         padding: 20px;
@@ -19,9 +25,37 @@
         text-align: left;
       }
 
+      .message:first-child {
+        margin-top: 0;
+      }
+
+      .message:last-child {
+        margin-bottom: 0;
+      }
+
       .message > h2,
       .message > p {
         margin: 0;
+      }
+
+      #modal-bg {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.5);
+      }
+
+      #modal {
+        background-color: #fefefe;
+        margin: 10% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
       }
     </style>
   </head>
@@ -30,13 +64,35 @@
       <h1>Email System</h1>
     </header>
 
+    <div id="modal-bg">
+      <div id="modal">
+        <h2>Compose New Email</h2>
+        <form id="new-email-form">
+          <label for="subject">Subject:</label>
+          <input type="text" id="subject" name="subject" required />
+
+          <label for="from">From:</label>
+          <input type="text" id="from" name="from" required />
+
+          <label for="to">To:</label>
+          <input type="text" id="to" name="to" required />
+
+          <label for="message">Message:</label>
+          <textarea id="message" name="message" required></textarea>
+
+          <button type="submit">Send Email</button>
+          <button id="close-modal">Close</button>
+        </form>
+      </div>
+    </div>
+
     <div class="messages">
       <div class="message">
         <h2>Subject: New Email</h2>
         <p>From: John Doe</p>
         <p>To: Jane Doe</p>
         <p>Date: 2021-01-01</p>
-        <p>Message: Hello, Jane. I hope you're doing well.</p>
+        <i>Message: Hello, Jane. I hope you're doing well.</i>
       </div>
 
       <div class="message">
@@ -44,11 +100,15 @@
         <p>From: Jane Doe</p>
         <p>To: John Doe</p>
         <p>Date: 2021-01-02</p>
-        <p>
+        <i>
           Message: Hi John, just a reminder that we have a meeting tomorrow at
           10am.
-        </p>
+        </i>
       </div>
     </div>
+
+    <form id="compose-form">
+      <button type="submit">Compose Email</button>
+    </form>
   </body>
 </html>
