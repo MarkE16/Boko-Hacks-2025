@@ -13,6 +13,7 @@
         max-width: 100%;
         margin: 20px auto;
         height: 30vh;
+        max-height: 30vh;
         overflow-y: auto;
       }
       .message {
@@ -71,14 +72,14 @@
           <label for="subject">Subject:</label>
           <input type="text" id="subject" name="subject" required />
 
-          <label for="from">From:</label>
-          <input type="text" id="from" name="from" required />
+          <label for="sender">From:</label>
+          <input type="text" id="sender" name="sender" required />
 
-          <label for="to">To:</label>
-          <input type="text" id="to" name="to" required />
+          <label for="recipient">To:</label>
+          <input type="text" id="recipient" name="recipient" required />
 
-          <label for="message">Message:</label>
-          <textarea id="message" name="message" required></textarea>
+          <label for="body">Message:</label>
+          <textarea id="body" name="body" required></textarea>
 
           <button type="submit">Send Email</button>
           <button id="close-modal">Close</button>
@@ -86,25 +87,20 @@
       </div>
     </div>
 
-    <div class="messages">
+    <div id="messages">
+      {% if emails %} {% for email in emails %}
       <div class="message">
-        <h2>Subject: New Email</h2>
-        <p>From: John Doe</p>
-        <p>To: Jane Doe</p>
-        <p>Date: 2021-01-01</p>
-        <i>Message: Hello, Jane. I hope you're doing well.</i>
+        <h2>Subject: {{ email.subject }}</h2>
+        <p>From: {{ email.sender }}</p>
+        <p>To: {{ email.recipient }}</p>
+        <i>Message: {{ email.body }}</i>
       </div>
-
+      {% endfor %} {% else %}
       <div class="message">
-        <h2>Subject: Meeting Reminder</h2>
-        <p>From: Jane Doe</p>
-        <p>To: John Doe</p>
-        <p>Date: 2021-01-02</p>
-        <i>
-          Message: Hi John, just a reminder that we have a meeting tomorrow at
-          10am.
-        </i>
+        <h2>No Emails</h2>
+        <p>There are no emails to display.</p>
       </div>
+      {% endif %}
     </div>
 
     <form id="compose-form">
