@@ -12,3 +12,7 @@
 
 - Fixed file upload vulnerability by accepting the accepted file types only. Otherwise,
   the file will be rejected.
+
+### Admin
+
+- Moved default admin information to .env instead of in the plaintext.
