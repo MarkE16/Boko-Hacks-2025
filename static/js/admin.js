@@ -3,6 +3,27 @@ function initializeApp() {
     
     adminContainer.innerHTML = `
         <div class="admin-container">
+        <div id="change-password-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Change Default Admin Password</h3>
+            <form id="change-password-form">
+                <div class="form-group">
+                    <label for="current-password">Current Password</label>
+                    <input type="password" id="current-password" name="current_password" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-password">New Password</label>
+                    <input type="password" id="new-password-admin" name="new_password" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirm-password">Confirm New Password</label>
+                    <input type="password" id="confirm-password" name="confirm_password" required>
+                </div>
+                <button type="submit" class="admin-btn">Update Password</button>
+            </form>
+        </div>
+    </div>
             <div id="message-area"></div>
             <div id="login-section">
                 <h2>ADMIN LOGIN</h2>
@@ -106,6 +127,37 @@ function initializeApp() {
             color: #501214;
             margin-top: 20px;
             margin-bottom: 10px;
+        }
+
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            width: 80%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
         }
         
         .section-desc {
@@ -305,14 +357,80 @@ function initializeApp() {
         admins.forEach(admin => {
             const adminItem = document.createElement('div');
             adminItem.className = 'admin-item';
+            
+            // Check if this is the default admin
+            const isDefaultAdmin = admin[2];
+            // Check if current user is the default admin using the window variable
+            const isCurrentUserDefaultAdmin = isDefaultAdmin && window.isDefaultAdmin === true;
+            
             adminItem.innerHTML = `
-                <span>${admin[1]} ${admin[2] ? '<small>(Default Admin)</small>' : ''}</span>
-                ${admin[2] ? '<span>Protected</span>' : `
-                    <button onclick="removeAdmin(${admin[0]})" class="action-btn">Remove</button>
-                `}
+                <span>${admin[1]} ${isDefaultAdmin ? '<small>(Default Admin)</small>' : ''}</span>
+                ${isDefaultAdmin ? 
+                    (isCurrentUserDefaultAdmin ? 
+                        '<button id="change-default-admin-password" class="action-btn">Change Password</button>' : 
+                        '<span>Protected</span>') : 
+                    `<button onclick="removeAdmin(${admin[0]})" class="action-btn">Remove</button>`
+                }
             `;
             adminList.appendChild(adminItem);
         });
+        
+        // Add event listener for the change password button
+        const changePasswordBtn = document.getElementById('change-default-admin-password');
+        if (changePasswordBtn) {
+            changePasswordBtn.addEventListener('click', showChangePasswordModal);
+        }
+    }
+
+
+    function showChangePasswordModal() {
+        document.getElementById('change-password-modal').style.display = 'flex';
+    }
+
+    function hideChangePasswordModal() {
+        document.getElementById('change-password-modal').style.display = 'none';
+        document.getElementById('change-password-form').reset();
+    }
+
+    async function handleChangePassword(event) {
+        event.preventDefault();
+        
+        const currentPassword = document.getElementById('current-password').value;
+        const newPassword = document.getElementById('new-password-admin').value;
+        const confirmPassword = document.getElementById('confirm-password').value;
+        
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            showMessage('All fields are required');
+            return;
+        }
+        
+        if (newPassword !== confirmPassword) {
+            showMessage('New passwords do not match');
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('current_password', currentPassword);
+        formData.append('new_password', newPassword);
+        
+        try {
+            const response = await fetch('/admin/update-default-admin', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                hideChangePasswordModal();
+                showMessage(data.message || 'Password updated successfully', 'success');
+            } else {
+                showMessage(data.message || 'Failed to update password');
+            }
+        } catch (error) {
+            console.error('Error updating password:', error);
+            showMessage('An error occurred. Please try again.');
+        }
     }
 
     async function updateUserList() {
@@ -391,6 +509,9 @@ function initializeApp() {
 
             if (data.success) {
                 document.getElementById('admin-username-display').textContent = username;
+                
+                // Store if the current user is the default admin
+                window.isDefaultAdmin = data.is_default_admin || false;
                 
                 document.getElementById('login-section').style.display = 'none';
                 document.getElementById('admin-panel').style.display = 'block';
@@ -634,6 +755,9 @@ function initializeApp() {
                 // Display the admin username from session
                 document.getElementById('admin-username-display').textContent = data.admin_username || "admin";
                 
+                // Store if the current user is the default admin
+                window.isDefaultAdmin = data.is_default_admin || false;
+                
                 updateAdminList(data.admins);
                 updateUserList();
             }
@@ -642,6 +766,17 @@ function initializeApp() {
             console.error("Error checking login status:", error);
             showMessage('Failed to check login status');
         });
+
+    document.getElementById('change-password-form').addEventListener('submit', handleChangePassword);
+
+    // Close modal when clicking the X or outside the modal
+    document.querySelector('.close-modal').addEventListener('click', hideChangePasswordModal);
+    window.addEventListener('click', function(event) {
+        const modal = document.getElementById('change-password-modal');
+        if (event.target === modal) {
+            hideChangePasswordModal();
+        }
+    });
 }
 
 // Make initialization function available globally

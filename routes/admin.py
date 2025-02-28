@@ -436,3 +436,77 @@ def logout():
         log_logout(username=admin_username, admin=True)
         
     return jsonify({"success": True, "message": "Logged out successfully"})
+@admin_bp.route('/admin/update-default-admin', methods=['POST'])
+def update_default_admin():
+    """
+    Allow the default admin to change their own password
+    
+    Returns:
+        JSON response with success status and message
+    """
+    if not session.get('admin_logged_in') or not session.get('is_default_admin'):
+        log_admin_action(
+            action="update_default_admin_attempt",
+            admin_username=session.get('admin_username', 'unknown'),
+            success=False,
+            details="Unauthorized attempt to update default admin password"
+        )
+        return jsonify({'success': False, 'message': "Unauthorized. Only the default admin can update the password."})
+    
+    new_password = request.form.get("new_password")
+    current_password = request.form.get("current_password")
+    
+    if not all([new_password, current_password]):
+        log_admin_action(
+            action="update_default_admin",
+            admin_username=session.get('admin_username'),
+            success=False,
+            details="Missing required fields"
+        )
+        return jsonify({'success': False, 'message': "Both current and new password are required"})
+    
+    admin_role = Admin.query.filter_by(is_default=True).first()
+    if not admin_role or not (admin_user := User.query.get(admin_role.user_id)):
+        log_admin_action(
+            action="update_default_admin",
+            admin_username=session.get('admin_username'),
+            success=False,
+            details="Default admin not found"
+        )
+        return jsonify({'success': False, 'message': "Default admin not found"})
+    
+    if not admin_user.check_password(current_password):
+        log_admin_action(
+            action="update_default_admin",
+            admin_username=session.get('admin_username'),
+            success=False,
+            details="Incorrect current password"
+        )
+        return jsonify({'success': False, 'message': "Current password is incorrect"})
+    
+    try:
+        os.environ['DEFAULT_ADMIN_PASSWORD'] = new_password
+        admin_user.set_password(new_password)
+        db.session.commit()
+        
+        log_admin_action(
+            action="update_default_admin",
+            admin_username=admin_user.username,
+            success=True,
+            details="Default admin password updated"
+        )
+        
+        return jsonify({
+            'success': True, 
+            'message': "Default admin password updated successfully"
+        })
+    except Exception as e:
+        log_error(
+            error_type="database_error",
+            message="Error updating default admin password",
+            user=session.get('admin_username'),
+            admin=True,
+            exception=e
+        )
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f"Error updating password: {str(e)}"})
