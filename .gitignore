@@ -8,3 +8,4 @@ Rules(READ ME FIRST).pdf
 logs/
 test_images/
 test_illusions.py
+.env

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <title>Verify - BokoHacks</title>
+</head>
+<body>
+  <header>
+    <h1>Verify Your Account</h1>
+  </header>
+  <main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-messages">
+          {% for category, message in messages %}
+            <div class="flash {{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    <section>
+      <h2>Enter Verification Code</h2>
+      <form action="{{ url_for('register.verify') }}" method="POST">
+        <label for="verification_code">Verification Code:</label>
+        <input type="text" id="verification_code" name="verification_code" placeholder="Enter the code sent to your email" required>
+        
+        <button type="submit">Verify</button>
+      </form>
+    </section>
+  </main>
+  <footer>
+    <p>&copy; 2025 BokoHacks | All Rights Reserved</p>
+  </footer>
+</body>
+</html>

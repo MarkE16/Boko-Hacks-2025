@@ -5,12 +5,15 @@ from models.user import User
 from models.admin import Admin
 from extensions import db
 from utils.logger import log_login, log_logout, log_admin_action, log_error
+import os
+from dotenv import load_dotenv
 
 admin_bp = Blueprint("admin", __name__)
 
+load_dotenv()
 DEFAULT_ADMIN = {
-    "username": "admin",
-    "password": "password"
+    "username": os.getenv('DEFAULT_ADMIN_USERNAME'),
+    "password": os.getenv('DEFAULT_ADMIN_PASSWORD')
 }
 
 def init_admin_db():

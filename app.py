@@ -1,5 +1,5 @@
 from flask import Flask
-from extensions import db
+from extensions import db, mail  # Import db and mail from extensions.py
 from routes.home import home_bp
 from routes.hub import hub_bp
 from routes.login import login_bp
@@ -20,12 +20,24 @@ from sqlalchemy import inspect
 import os
 # Import the logger to ensure it's initialized
 from utils.logger import logger
+from dotenv import load_dotenv
 
 app = Flask(__name__)
+
+load_dotenv()
 app.secret_key = "supersecretkey"
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///boko_hacks.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')  # Set default sender
+
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # Set maximum file size to 10MB
 
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -35,6 +47,7 @@ LOGS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
 os.makedirs(LOGS_DIR, exist_ok=True)
 
 db.init_app(app)
+mail.init_app(app)
 
 # Register Blueprints
 app.register_blueprint(home_bp)
