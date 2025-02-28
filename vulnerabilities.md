@@ -12,6 +12,7 @@
 
 - Fixed file upload vulnerability by accepting the accepted file types only. Otherwise,
   the file will be rejected.
+- Fixed DOS attack vulnerability by limiting file size uploads to 10MB.
 
 ### Admin
 
