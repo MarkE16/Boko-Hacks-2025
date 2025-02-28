@@ -26,7 +26,6 @@ from dotenv import load_dotenv
 app = Flask(__name__)
 
 load_dotenv()
-app.secret_key = "supersecretkey"
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///boko_hacks.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
