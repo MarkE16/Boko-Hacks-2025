@@ -34,7 +34,7 @@
 
 ### app.py
 
-- Removed super secret code that wasn't being used that was in plaintext.
+- Moved secret code to .env file instead of in plaintext.
 
 ### Not a Vulnerability
 
