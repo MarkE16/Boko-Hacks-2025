@@ -21,6 +21,7 @@ function initializeApp() {
                             <img id="captcha-image" src="/captcha/generate" alt="Captcha">
                             <button type="button" id="refresh-captcha" class="small-btn">Refresh</button>
                         </div>
+                        <p class="captcha-question">Which of these illusions works on you?</p>
                         <div class="captcha-options">
                             <label>
                                 <input type="radio" name="captcha_answer" value="A" required> Option A
@@ -255,6 +256,13 @@ function initializeApp() {
         .captcha-options {
             display: flex;
             gap: 20px;
+        }
+        
+        .captcha-question {
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
         }
         
         #refresh-captcha {
