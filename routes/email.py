@@ -16,8 +16,9 @@ def email():
     return jsonify({'success': False, 'error': 'User not found'}), 404
 
   all_emails = Email.query.filter_by(recipient=current_user.username).all()
+  all_users_not_current = User.query.filter(User.username != current_user.username).all()
 
-  return render_template('email.html', emails=all_emails, current_user_id=current_user.id)
+  return render_template('email.html', emails=all_emails, recipients=all_users_not_current, current_user_id=current_user.id)
 
 @email_bp.route('/send', methods=['POST'])
 def send_email():

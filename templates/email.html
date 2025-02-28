@@ -58,12 +58,27 @@
         border: 1px solid #888;
         width: 80%;
       }
+
+      #notification {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 10px;
+        background-color: gray;
+        color: white;
+        text-align: center;
+      }
     </style>
   </head>
   <body>
     <header>
       <h1>Email System</h1>
     </header>
+
+    <span id="notification"></span>
 
     <div id="modal-bg">
       <div id="modal">
@@ -76,7 +91,13 @@
           <input type="text" id="sender" name="sender" required />
 
           <label for="recipient">To:</label>
-          <input type="text" id="recipient" name="recipient" required />
+          <select id="recipient" name="recipient">
+            {% for recipient in recipients %}
+            <option value="{{ recipient.username }}">
+              {{ recipient.username }}
+            </option>
+            {% endfor %}
+          </select>
 
           <label for="body">Message:</label>
           <textarea id="body" name="body" required></textarea>

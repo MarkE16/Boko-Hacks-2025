@@ -34,16 +34,19 @@ function attachListeners() {
       body: JSON.stringify({ subject, recipient, body }),
     });
 
-    const newMessage = document.createElement("div");
-    newMessage.classList.add("message");
+    const notification = document.getElementById("notification");
 
     if (response.ok) {
-      newMessage.textContent = "Email sent successfully";
+      notification.textContent = "Email sent successfully";
+    } else {
+      notification.textContent = "Failed to send email";
     }
-    
-    
 
-    messages.appendChild(newMessage);
+    notification.style.display = "block";
+
+    setTimeout(() => {
+      notification.style.display = "none";
+    }, 3000);
   });
 
   closeBtn.addEventListener("click", function (e) {
