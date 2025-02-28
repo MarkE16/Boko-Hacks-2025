@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session
 from models.user import User
 from extensions import db
+from utils.logger import log_registration
 import requests
 import json
 
@@ -35,11 +36,13 @@ def register():
         client_ip = request.remote_addr
 
         if not verify_hcaptcha(h_captcha_response, client_ip):
+            log_registration(success=False, username=username, reason="Invalid hCaptcha")
             flash("Invalid hCaptcha. Please try again.", "error")
             return redirect(url_for("register.register"))
 
         existing_user = User.query.filter_by(username=username).first()
         if existing_user:
+            log_registration(success=False, username=username, reason="Username already exists")
             flash("Username already exists. Please choose a different one.", "error")
             return redirect(url_for("register.register"))
 
@@ -48,8 +51,8 @@ def register():
         db.session.add(new_user)
         db.session.commit()
 
+        log_registration(success=True, username=username)
         flash("Registration successful! You can now log in.", "success")
         return redirect(url_for("login.login"))
 
     return render_template("register.html")
-

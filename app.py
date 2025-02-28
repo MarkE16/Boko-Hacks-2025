@@ -18,6 +18,8 @@ from models.admin import Admin
 from models.file import File  
 from sqlalchemy import inspect
 import os
+# Import the logger to ensure it's initialized
+from utils.logger import logger
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
@@ -27,6 +29,10 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# Ensure logs directory exists
+LOGS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
+os.makedirs(LOGS_DIR, exist_ok=True)
 
 db.init_app(app)
 

@@ -6,3 +6,4 @@ venv/
 .env
 Rules(READ ME FIRST).pdf
 instance/
+logs/

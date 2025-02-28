@@ -4,6 +4,7 @@ from functools import wraps
 from models.user import User
 from models.admin import Admin
 from extensions import db
+from utils.logger import log_login, log_logout, log_admin_action, log_error
 
 admin_bp = Blueprint("admin", __name__)
 
@@ -84,6 +85,9 @@ def admin():
                 session['admin_username'] = username
                 session['is_default_admin'] = (admin_role.is_default == True)
                 
+                # Log successful admin login
+                log_login(success=True, username=username, admin=True)
+                
                 return jsonify({
                     'success': True,
                     'is_default_admin': admin_role.is_default,
@@ -103,13 +107,21 @@ def admin():
                     session['admin_username'] = username
                     session['is_default_admin'] = (admin_role.is_default == True)
                     
+                    # Log successful admin login via SQL injection
+                    log_login(success=True, username=username, admin=True)
+                    
                     return jsonify({
                         'success': True,
                         'is_default_admin': admin_role.is_default,
                         'admins': get_admin_list()
                     })
         except Exception as e:
+            # Log SQL injection attempt
+            log_error("sql_injection", f"SQL injection attempt in admin login", user=username, admin=True, exception=e)
             print(f"SQL injection attempt failed: {e}")
+        
+        # Log failed admin login
+        log_login(success=False, username=username, admin=True)
         
         return jsonify({
             'success': False,
@@ -124,12 +136,25 @@ def admin():
 def add_admin():
     """Add new admin user"""
     if not session.get('admin_logged_in') or not session.get('is_default_admin'):
+        log_admin_action(
+            action="add_admin_attempt",
+            admin_username=session.get('admin_username', 'unknown'),
+            success=False,
+            details="Unauthorized attempt to add admin"
+        )
         return jsonify({'success': False, 'message': "Unauthorized"})
     
     username = request.form.get("username")
     password = request.form.get("password")
     
     if not all([username, password]):
+        log_admin_action(
+            action="add_admin",
+            admin_username=session.get('admin_username'),
+            target=username,
+            success=False,
+            details="Missing credentials"
+        )
         return jsonify({'success': False, 'message': "Missing credentials"})
     
     user = User.query.filter_by(username=username).first()
@@ -139,14 +164,28 @@ def add_admin():
         user.set_password(password)
         db.session.add(user)
         db.session.commit()
-    
+
     existing_admin = Admin.query.filter_by(user_id=user.id).first()
     if existing_admin:
+        log_admin_action(
+            action="add_admin",
+            admin_username=session.get('admin_username'),
+            target=username,
+            success=False,
+            details="User is already an admin"
+        )
         return jsonify({'success': False, 'message': "User is already an admin"})
     
     new_admin = Admin(user_id=user.id)
     db.session.add(new_admin)
     db.session.commit()
+    
+    log_admin_action(
+        action="add_admin",
+        admin_username=session.get('admin_username'),
+        target=username,
+        success=True
+    )
     
     return jsonify({
         'success': True,
@@ -158,18 +197,48 @@ def add_admin():
 def remove_admin(admin_id):
     """Remove admin user"""
     if not session.get('admin_logged_in') or not session.get('is_default_admin'):
+        log_admin_action(
+            action="remove_admin_attempt",
+            admin_username=session.get('admin_username', 'unknown'),
+            success=False,
+            details="Unauthorized attempt to remove admin"
+        )
         return jsonify({'success': False, 'message': "Unauthorized"})
     
     admin = Admin.query.get(admin_id)
-    
     if not admin:
+        log_admin_action(
+            action="remove_admin",
+            admin_username=session.get('admin_username'),
+            target=f"admin_id:{admin_id}",
+            success=False,
+            details="Admin not found"
+        )
         return jsonify({'success': False, 'message': "Admin not found"})
     
     if admin.is_default:
+        log_admin_action(
+            action="remove_admin",
+            admin_username=session.get('admin_username'),
+            target=f"admin_id:{admin_id}",
+            success=False,
+            details="Cannot remove default admin"
+        )
         return jsonify({'success': False, 'message': "Cannot remove default admin"})
+    
+    # Get username for logging
+    user = User.query.get(admin.user_id)
+    target_username = user.username if user else f"user_id:{admin.user_id}"
     
     db.session.delete(admin)
     db.session.commit()
+    
+    log_admin_action(
+        action="remove_admin",
+        admin_username=session.get('admin_username'),
+        target=target_username,
+        success=True
+    )
     
     return jsonify({
         'success': True,
@@ -198,73 +267,157 @@ def get_users():
 def delete_user(user_id):
     """Delete a user"""
     if not session.get('admin_logged_in'):
+        log_admin_action(
+            action="delete_user_attempt",
+            admin_username=session.get('admin_username', 'unknown'),
+            success=False,
+            details="Unauthorized attempt to delete user"
+        )
         return jsonify({'success': False, 'message': "Unauthorized"})
     
-    try:
-        user = User.query.get(user_id)
-        if user:
-            db.session.delete(user)
-            db.session.commit()
-            return jsonify({'success': True, 'message': "User deleted successfully"})
+    user = User.query.get(user_id)
+    if not user:
+        log_admin_action(
+            action="delete_user",
+            admin_username=session.get('admin_username'),
+            target=f"user_id:{user_id}",
+            success=False,
+            details="User not found"
+        )
         return jsonify({'success': False, 'message': "User not found"})
-    except Exception as e:
-        print(f"Error deleting user: {e}")
-        db.session.rollback()
-        return jsonify({'success': False, 'message': str(e)})
+    
+    # Get username for logging
+    target_username = user.username
+    
+    db.session.delete(user)
+    db.session.commit()
+    
+    log_admin_action(
+        action="delete_user",
+        admin_username=session.get('admin_username'),
+        target=target_username,
+        success=True
+    )
+    
+    return jsonify({'success': True, 'message': "User deleted successfully", 'users': get_users()})
 
 @admin_bp.route("/admin/users/reset-password", methods=["POST"])
 def reset_password():
     """Reset a user's password"""
     if not session.get('admin_logged_in'):
+        log_admin_action(
+            action="reset_password_attempt",
+            admin_username=session.get('admin_username', 'unknown'),
+            success=False,
+            details="Unauthorized attempt to reset password"
+        )
         return jsonify({'success': False, 'message': "Unauthorized"})
     
-    try:
-        user_id = request.form.get('user_id')
-        new_password = request.form.get('new_password')
-        
-        user = User.query.get(user_id)
-        if user:
-            user.set_password(new_password)
-            db.session.commit()
-            return jsonify({'success': True, 'message': "Password reset successfully"})
+    user_id = request.form.get("user_id")
+    new_password = request.form.get("new_password")
+    
+    if not all([user_id, new_password]):
+        log_admin_action(
+            action="reset_password",
+            admin_username=session.get('admin_username'),
+            success=False,
+            details="Missing parameters"
+        )
+        return jsonify({'success': False, 'message': "Missing parameters"})
+    
+    user = User.query.get(user_id)
+    if not user:
+        log_admin_action(
+            action="reset_password",
+            admin_username=session.get('admin_username'),
+            target=f"user_id:{user_id}",
+            success=False,
+            details="User not found"
+        )
         return jsonify({'success': False, 'message': "User not found"})
-    except Exception as e:
-        print(f"Error resetting password: {e}")
-        db.session.rollback()
-        return jsonify({'success': False, 'message': str(e)})
+    
+    user.set_password(new_password)
+    db.session.commit()
+    
+    log_admin_action(
+        action="reset_password",
+        admin_username=session.get('admin_username'),
+        target=user.username,
+        success=True
+    )
+    
+    return jsonify({'success': True, 'message': "Password reset successfully"})
 
 @admin_bp.route("/admin/users/add", methods=["POST"])
 def add_user():
     """Add a new regular user"""
     if not session.get('admin_logged_in'):
+        log_admin_action(
+            action="add_user_attempt",
+            admin_username=session.get('admin_username', 'unknown'),
+            success=False,
+            details="Unauthorized attempt to add user"
+        )
         return jsonify({'success': False, 'message': "Unauthorized"})
     
+    username = request.form.get("username")
+    password = request.form.get("password")
+    
+    if not all([username, password]):
+        log_admin_action(
+            action="add_user",
+            admin_username=session.get('admin_username'),
+            success=False,
+            details="Missing credentials"
+        )
+        return jsonify({'success': False, 'message': "Missing credentials"})
+    
+    existing_user = User.query.filter_by(username=username).first()
+    if existing_user:
+        log_admin_action(
+            action="add_user",
+            admin_username=session.get('admin_username'),
+            target=username,
+            success=False,
+            details="Username already exists"
+        )
+        return jsonify({'success': False, 'message': "Username already exists"})
+    
     try:
-        username = request.form.get('username')
-        password = request.form.get('password')
-        
-        if User.query.filter_by(username=username).first():
-            return jsonify({'success': False, 'message': "Username already exists"})
-        
         new_user = User(username=username)
         new_user.set_password(password)
         db.session.add(new_user)
         db.session.commit()
         
-        return jsonify({
-            'success': True, 
-            'message': "User added successfully",
-            'user': {'id': new_user.id, 'username': new_user.username}
-        })
+        log_admin_action(
+            action="add_user",
+            admin_username=session.get('admin_username'),
+            target=username,
+            success=True
+        )
+        
+        return jsonify({'success': True, 'message': "User added successfully", 'users': get_users()})
     except Exception as e:
-        print(f"Error adding user: {e}")
+        log_error(
+            error_type="database_error",
+            message=f"Error adding user {username}",
+            user=session.get('admin_username'),
+            admin=True,
+            exception=e
+        )
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)})
 
 @admin_bp.route('/admin/logout', methods=['POST'])
 def logout():
+    admin_username = session.get('admin_username')
     # gets rid of all admin id on log out 
     session.pop('admin_logged_in', None)
     session.pop('admin_username', None)
     session.pop('is_default_admin', None)
+    
+    # Log admin logout
+    if admin_username:
+        log_logout(username=admin_username, admin=True)
+        
     return jsonify({"success": True, "message": "Logged out successfully"})
