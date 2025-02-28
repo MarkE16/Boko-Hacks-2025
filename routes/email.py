@@ -3,6 +3,7 @@ from extensions import db
 from models.user import User
 from models.email import Email
 from werkzeug.utils import secure_filename
+import re
 
 email_bp = Blueprint('email', __name__, url_prefix='/apps/email')
 
@@ -29,15 +30,15 @@ def send_email():
   if not current_user:
     return jsonify({'success': False, 'error': 'User not found'}), 404
 
-  data = request.get_json()
-  subject = data.get('subject')
-  recipient = data.get('recipient')
-  body = data.get('body')
-
   regex = r'<.*?>'
-  subject = subject.strip().replace(regex, '')
-  recipient = recipient.strip().replace(regex, '')
-  body = body.strip().replace(regex, '')
+  data = request.get_json()
+  subject = data.get('subject').strip()
+  recipient = data.get('recipient').strip()
+  body = data.get('body').strip()
+
+  subject = re.sub(regex, '', subject)
+  recipient = re.sub(regex, '', recipient)
+  body = re.sub(regex, '', body)
 
 
   new_email = Email(subject=subject, recipient=recipient, sender=current_user.username, body=body)
