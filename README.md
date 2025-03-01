@@ -116,9 +116,10 @@ MIT License - See LICENSE file for details
 ## RUNNING THIS APP
 
 You will need an hCaptcha secret key (HCAPTCHA_SECRET in .env) which we will send to rmo44@txstate.edu to run this app.
-Additionally, you will need to change the div with id='h-captcha' in register.html to have your site key as well. 
+Additionally, you will need to change the div with id='h-captcha' in register.html to have your site key. 
 Go to https://docs.hcaptcha.com/ to create your account and make the site/secret keys.
 
 Also include the following in the .env file:
 MAIL_USERNAME="bkhacks25@gmail.com"
 MAIL_PASSWORD="[the password we sent you in the google form]"
+SECRET_KEY="[your secret key]"
