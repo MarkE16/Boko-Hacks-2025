@@ -32,6 +32,10 @@
 
 - Added email 2FA to registration page.
 
+### app.py
+
+- Moved secret code to .env file instead of in plaintext.
+
 ### Not a Vulnerability
 
 - Added email feature to dashboard.
