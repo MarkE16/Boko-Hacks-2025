@@ -19,17 +19,6 @@
         color: #666;
     }
 
-    .admin-notice {
-        background: #fffde7;
-        border: 1px solid #fff59d;
-        padding: 0.75rem;
-        margin-bottom: 1rem;
-        border-radius: 4px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
     .close-notice {
         background: none;
         border: none;
@@ -155,11 +144,6 @@
         
         <div class="notes-container">
             <div id="message-area"></div>
-            
-            <div class="admin-notice">
-                <strong>Notice for admin users:</strong> Database maintenance scheduled. Table structure: notes(id, title, content, created_at, user_id)
-                <button class="close-notice">×</button>
-            </div>
 
             <form id="note-form">
                 <div class="form-header">
@@ -203,11 +187,6 @@
             console.log('Notes app initialized');
             
             const closeBtn = document.querySelector('.close-notice');
-            if (closeBtn) {
-                closeBtn.addEventListener('click', function() {
-                    document.querySelector('.admin-notice').style.display = 'none';
-                });
-            }
             
             const form = document.getElementById('note-form');
             if (form) {
